@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Music</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff"> 
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="icon" href="icons/icon-192x192.png" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <input type="text" id="search" placeholder="Cerca canzoni...">
+            <ul class="song-list">
+                </ul>
+            <div class="watermark" id="watermark">
+                <img src="echo.png" alt="EchoAI Logo">
+                <span>Powered by EchoAI</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <button id="menu-button">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="song-details">
+                <h2>Titolo Canzone</h2>
+                <p>Bush</p>
+            </div>
+            <div class="player-container">
+                <div class="controls-container">
+                    <div class="controls">
+                        <i class="fas fa-backward" id="prev"></i>
+                        <i class="fas fa-play" id="play-pause"></i>
+                        <i class="fas fa-forward" id="next"></i>
+                        <a id="download" href="#" download>
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                    <div class="progress-container">
+                        <input type="range" id="progress-bar" value="0" min="0" max="100">
+                    </div>
+                </div>
+                <div class="song-image">
+                    <img src="covers/default-cover.jpg" alt="Immagine Canzone">
+                </div>
+            </div>
+            <audio id="audio-player" src=""></audio>
+        </main>
+    </div>
+
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <span class="close" id="close-popup">&times;</span>
+            <h3>Scarica le nostre app</h3>
+            <button id="download-echo">Scarica Echo for Windows</button>
+            <button id="download-music">Scarica Music for Android</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+        .then(reg => {
+                console.log('Service Worker registrato con successo.', reg);
+            })
+        .catch(err => {
+                console.log('Registrazione del Service Worker fallita:', err);
+            });
+        }
+    </script>
+</body>
+</html>
