@@ -16,19 +16,19 @@ body {
 }
 
 /* Variabili CSS per i temi */:root {
-    --background-color: #ffffff;
+    --background-color: #f9fcff;
     --text-color: #000000;
-    --primary-color: #f0f0f0;
-    --secondary-color: #e0e0e0;
+    --primary-color: #f0f9ff;
+    --secondary-color: #e8f2fa;
     --sidebar-background: var(--primary-color);
     --player-background: var(--secondary-color);
 }
 
 [data-theme="dark"] {
-    --background-color: #000000;
+    --background-color: #111524;
     --text-color: #ffffff;
-    --primary-color: #1a1a1a;
-    --secondary-color: #333333;
+    --primary-color: #1b2332;
+    --secondary-color: #111524;
     --sidebar-background: var(--primary-color);
     --player-background: var(--secondary-color);
 }
