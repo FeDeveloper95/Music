@@ -16,7 +16,7 @@ const songs = [
         title: 'Crazy of You',
         artist: 'Bush',
         image: 'covers/crazy-of-you.png',
-        audio: 'audio/crazy-of-you'
+        audio: 'audio/crazy-of-you.mp3'
     },
     {
         title: 'Die Alone -Bush remix',
