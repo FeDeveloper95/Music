@@ -13,6 +13,12 @@ const songs = [
         audio: 'audio/by-your-side.mp3'
     },
     {
+        title: 'Crazy of You',
+        artist: 'Bush',
+        image: 'covers/crazy-of-you.png',
+        audio: 'audio/crazy-of-you'
+    },
+    {
         title: 'Die Alone -Bush remix',
         artist: 'Bush',
         image: 'covers/die-alone.jpg',
