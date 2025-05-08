@@ -97,6 +97,12 @@ const songs = [
         audio: 'audio/more-than-ever.mp3'
     },
     {
+        title: 'On my way',
+        artist: 'Bush, Alan Walker, Sabrina Carpenter',
+        image: 'covers/on-my-way.jpg',
+        audio: 'audio/on-my-way.mp3'
+    },
+    {
         title: 'Perfect as a Star',
         artist: 'Bush',
         image: 'covers/perfect-as-a-star.jpg',
