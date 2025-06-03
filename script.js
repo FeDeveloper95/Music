@@ -135,13 +135,16 @@ const songs = [
 ];
 
 let currentSongIndex = 0;
+let isPlaying = false;
+let isShuffle = false;
+let repeatMode = 0; // 0: no repeat, 1: repeat all, 2: repeat one
 
 // Elementi del DOM
-const songList = document.querySelector('.song-list');
-const songImage = document.querySelector('.song-image img');
-const songDetails = document.querySelector('.song-details');
-const songTitle = document.querySelector('.song-details h2');
-const songArtist = document.querySelector('.song-details p');
+const songListEl = document.querySelector('.song-list');
+const songImageEl = document.querySelector('.song-image img');
+const songDetailsEl = document.querySelector('.song-details');
+const songTitleEl = document.querySelector('.song-details h2');
+const songArtistEl = document.querySelector('.song-details p');
 const audioPlayer = document.getElementById('audio-player');
 const playPauseBtn = document.getElementById('play-pause');
 const prevBtn = document.getElementById('prev');
@@ -149,51 +152,61 @@ const nextBtn = document.getElementById('next');
 const searchInput = document.getElementById('search');
 const downloadBtn = document.getElementById('download');
 const progressBar = document.getElementById('progress-bar');
+const shuffleBtn = document.getElementById('shuffle');
+const repeatBtn = document.getElementById('repeat');
 
-// Elementi per il popup
-const watermark = document.getElementById('watermark');
-const popup = document.getElementById('popup');
-const closePopupBtn = document.getElementById('close-popup');
-const downloadEchoBtn = document.getElementById('download-echo');
-const downloadMusicBtn = document.getElementById('download-music');
-
-// Elemento per il pulsante del menu
 const menuButton = document.getElementById('menu-button');
 const sidebar = document.getElementById('sidebar');
 
-// Funzione per caricare una canzone con animazioni
+// Funzione per caricare una canzone
 function loadSong(songIndex) {
     const song = songs[songIndex];
 
-    // Aggiungi classi per la transizione
-    songImage.classList.add('fade-out');
-    songDetails.classList.add('fade-out');
-
+    songImageEl.classList.add('fade-out');
     setTimeout(() => {
-        // Aggiorna i contenuti
-        songImage.src = song.image;
-        songTitle.textContent = song.title;
-        songArtist.textContent = song.artist;
+        songImageEl.src = song.image;
+        songTitleEl.textContent = song.title;
+        songArtistEl.textContent = song.artist;
         audioPlayer.src = song.audio;
-        downloadBtn.href = song.audio;
+        if (downloadBtn) {
+            downloadBtn.href = song.audio;
+            // Imposta il nome del file per il download (opzionale, ma migliora l'UX)
+            // Estrai il nome del file dal percorso audio
+            const audioFileName = song.audio.substring(song.audio.lastIndexOf('/') + 1);
+            downloadBtn.download = `${song.artist} - ${song.title}.${audioFileName.split('.').pop()}`;
 
-        // Rimuovi le classi dopo aver aggiornato
-        songImage.classList.remove('fade-out');
-        songDetails.classList.remove('fade-out');
-    }, 500);
+        }
+        songImageEl.classList.remove('fade-out');
 
-    // Resetta la barra di avanzamento
+        // Media Session API
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: song.title,
+                artist: song.artist,
+                album: 'Bush Music Collection', // Puoi personalizzare o lasciare vuoto
+                artwork: [
+                    // È buona norma fornire diverse dimensioni se disponibili
+                    // Per ora usiamo la stessa immagine, il browser/OS la scalerà
+                    { src: song.image, sizes: '128x128', type: 'image/png' }, // Adatta tipo se usi jpg
+                    { src: song.image, sizes: '256x256', type: 'image/png' },
+                    { src: song.image, sizes: '512x512', type: 'image/png' }
+                ]
+            });
+        }
+    }, 300);
     progressBar.value = 0;
 }
 
-let isPlaying = false;
-
 // Funzioni di riproduzione
 function playSong() {
-    audioPlayer.play();
-    isPlaying = true;
-    playPauseBtn.classList.remove('fa-play');
-    playPauseBtn.classList.add('fa-pause');
+    audioPlayer.play().then(() => {
+        isPlaying = true;
+        playPauseBtn.classList.remove('fa-play');
+        playPauseBtn.classList.add('fa-pause');
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.playbackState = "playing";
+        }
+    }).catch(error => console.error("Errore durante la riproduzione:", error));
 }
 
 function pauseSong() {
@@ -201,116 +214,168 @@ function pauseSong() {
     isPlaying = false;
     playPauseBtn.classList.remove('fa-pause');
     playPauseBtn.classList.add('fa-play');
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+    }
 }
 
 playPauseBtn.addEventListener('click', () => {
-    isPlaying? pauseSong(): playSong();
+    isPlaying ? pauseSong() : playSong();
 });
 
-audioPlayer.addEventListener('timeupdate', updateProgressBar);
-
-function updateProgressBar() {
+// Barra di avanzamento
+audioPlayer.addEventListener('timeupdate', () => {
     if (audioPlayer.duration) {
-        const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        progressBar.value = progressPercent;
+        progressBar.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
     }
-}
-
-// Cambia la posizione della canzone quando l'utente interagisce con la barra
+});
 progressBar.addEventListener('input', () => {
     if (audioPlayer.duration) {
-        const seekTime = (progressBar.value / 100) * audioPlayer.duration;
-        audioPlayer.currentTime = seekTime;
+        audioPlayer.currentTime = (progressBar.value / 100) * audioPlayer.duration;
     }
 });
 
+// Logica canzone terminata (Shuffle/Repeat)
 audioPlayer.addEventListener('ended', () => {
-    nextSong();
+    if (repeatMode === 2) { // Repeat One
+        audioPlayer.currentTime = 0;
+        playSong();
+    } else {
+        handleNextSong(); // Chiama la logica per la prossima canzone
+    }
 });
 
-// Canzone successiva e precedente
-function nextSong() {
-    currentSongIndex = (currentSongIndex + 1) % songs.length;
-    loadSong(currentSongIndex);
-    if (isPlaying) {
-        playSong();
+// Funzione per gestire la prossima canzone (chiamata da nextBtn e da 'ended')
+function handleNextSong() {
+    let previousSongIndex = currentSongIndex; // Per evitare ripetizione immediata in shuffle
+
+    if (isShuffle) {
+        if (songs.length <= 1) {
+            currentSongIndex = 0;
+        } else {
+            do {
+                currentSongIndex = Math.floor(Math.random() * songs.length);
+            } while (currentSongIndex === previousSongIndex); // Evita di suonare la stessa canzone di fila
+        }
+    } else { // No shuffle
+        currentSongIndex++;
     }
+
+    // Gestione fine lista e repeat all
+    if (currentSongIndex >= songs.length) {
+        if (repeatMode === 1) { // Repeat All
+            currentSongIndex = 0;
+        } else { // No repeat (e non shuffle, o shuffle ha esaurito le opzioni non ripetute)
+            if (!isShuffle) { // Se non è shuffle, fermati alla fine della lista (o vai all'inizio e metti in pausa)
+                currentSongIndex = 0; 
+                loadSong(currentSongIndex);
+                pauseSong();
+                return; // Esci per non avviare la riproduzione automatica
+            }
+            // Se è shuffle e in qualche modo si arriva qui (improbabile con la logica do-while), 
+            // si potrebbe reimpostare o gestire diversamente, ma la logica attuale dovrebbe prevenire.
+        }
+    }
+    
+    loadSong(currentSongIndex);
+    playSong(); // Riproduci la nuova canzone caricata
 }
 
-function prevSong() {
+nextBtn.addEventListener('click', handleNextSong);
+
+// Canzone precedente (ignora shuffle per semplicità, fa il giro della lista)
+function handlePrevSong() {
     currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
     loadSong(currentSongIndex);
-    if (isPlaying) {
-        playSong();
+    playSong(); // Riproduci sempre quando si preme manualmente prev
+}
+prevBtn.addEventListener('click', handlePrevSong);
+
+
+// Shuffle
+shuffleBtn.addEventListener('click', () => {
+    isShuffle = !isShuffle;
+    shuffleBtn.classList.toggle('active-shuffle', isShuffle);
+});
+
+// Repeat
+function updateRepeatButtonState() {
+    repeatBtn.classList.remove('active-repeat-all', 'active-repeat-one');
+    if (repeatMode === 1) {
+        repeatBtn.classList.add('active-repeat-all');
+        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i>'; // Icona standard per repeat all
+    } else if (repeatMode === 2) {
+        repeatBtn.classList.add('active-repeat-one');
+        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i><span class="repeat-one-badge">1</span>'; // Icona con badge '1'
+    } else {
+        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i>'; // Icona standard quando off
     }
 }
+repeatBtn.addEventListener('click', () => {
+    repeatMode = (repeatMode + 1) % 3;
+    updateRepeatButtonState();
+});
 
-nextBtn.addEventListener('click', nextSong);
-prevBtn.addEventListener('click', prevSong);
 
-// Generazione della lista delle canzoni
+// Generazione lista canzoni
 function displaySongs(songArray) {
-    songList.innerHTML = '';
-    songArray.forEach((song, index) => {
+    songListEl.innerHTML = '';
+    songArray.forEach((song) => {
         const li = document.createElement('li');
         li.textContent = song.title;
+        li.tabIndex = 0; // Per accessibilità (navigazione da tastiera)
+        li.setAttribute('role', 'button');
+
         li.addEventListener('click', () => {
             currentSongIndex = songs.indexOf(song);
             loadSong(currentSongIndex);
             playSong();
+            if (sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
         });
-        songList.appendChild(li);
+        li.addEventListener('keydown', (e) => { // Per accessibilità
+            if (e.key === 'Enter' || e.key === ' ') {
+                li.click();
+            }
+        });
+        songListEl.appendChild(li);
     });
 }
 
-// Funzione di ricerca
+// Ricerca
 searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase();
-    const filteredSongs = songs.filter(song => song.title.toLowerCase().includes(query));
+    const filteredSongs = songs.filter(song => song.title.toLowerCase().includes(query) || song.artist.toLowerCase().includes(query));
     displaySongs(filteredSongs);
 });
 
-// Tema chiaro/scuro basato sulle preferenze del dispositivo
+// Tema Chiaro/Scuro
 function setTheme() {
     const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-    if (prefersDarkScheme.matches) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-        document.documentElement.setAttribute('data-theme', 'light');
-    }
+    document.documentElement.setAttribute('data-theme', prefersDarkScheme.matches ? 'dark' : 'light');
 }
-
 setTheme();
-
-// Rileva cambiamenti nel tema del dispositivo
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setTheme);
 
-// Popup per il download delle app
-watermark.addEventListener('click', () => {
-    popup.classList.add('show');
-});
+// Menu Mobile
+if (menuButton && sidebar) {
+    menuButton.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+    });
+}
 
-closePopupBtn.addEventListener('click', () => {
-    popup.classList.add('hide');
-    setTimeout(() => {
-        popup.classList.remove('show', 'hide');
-    }, 300);
-});
+// Media Session Action Handlers
+if ('mediaSession' in navigator) {
+    navigator.mediaSession.setActionHandler('play', playSong);
+    navigator.mediaSession.setActionHandler('pause', pauseSong);
+    navigator.mediaSession.setActionHandler('previoustrack', handlePrevSong);
+    navigator.mediaSession.setActionHandler('nexttrack', handleNextSong);
+    // Potresti aggiungere 'seekbackward', 'seekforward', 'stop' ecc.
+}
 
-downloadEchoBtn.addEventListener('click', () => {
-    // Apri il link di Google Drive in una nuova scheda
-    window.open('https://drive.google.com/uc?export=download&id=1JUPShfJYN5Jhd2JDCjxpMClwRJDkqo1P', '_blank');
-});
-
-downloadMusicBtn.addEventListener('click', () => {
-    window.location.href = 'Music.apk';
-});
-
-// Funzione per gestire il menu in modalità mobile
-menuButton.addEventListener('click', () => {
-    sidebar.classList.toggle('show');
-});
 
 // Inizializzazione
 displaySongs(songs);
 loadSong(currentSongIndex);
+updateRepeatButtonState(); // Imposta stato iniziale bottone repeat
