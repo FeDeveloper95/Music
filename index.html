@@ -15,52 +15,42 @@
 <body>
     <div class="container">
         <aside class="sidebar" id="sidebar">
-            <input type="text" id="search" placeholder="Cerca canzoni...">
+            <input type="text" id="search" placeholder="Search">
+            <h2 class="sidebar-title">Songs list</h2>
             <ul class="song-list">
                 </ul>
-            <div class="watermark" id="watermark">
-                <img src="echo.png" alt="EchoAI Logo">
-                <span>Powered by EchoAI</span>
-            </div>
-        </aside>
+            </aside>
 
         <main class="main-content">
             <button id="menu-button">
-                <i class="fas fa-bars"></i>
-            </button>
+                </button>
+            <div class="song-image">
+                <img src="covers/default-cover.jpg" alt="Immagine Canzone">
+            </div>
             <div class="song-details">
                 <h2>Titolo Canzone</h2>
                 <p>Bush</p>
             </div>
-            <div class="player-container">
-                <div class="controls-container">
+            <div class="player-container"> <div class="controls-container">
+                    <div class="progress-container">
+                        <input type="range" id="progress-bar" value="0" min="0" max="100">
+                    </div>
                     <div class="controls">
                         <i class="fas fa-backward" id="prev"></i>
                         <i class="fas fa-play" id="play-pause"></i>
                         <i class="fas fa-forward" id="next"></i>
+                    </div>
+                    <div class="secondary-controls">
                         <a id="download" href="#" download>
                             <i class="fas fa-download"></i>
                         </a>
+                        <i class="fas fa-shuffle" id="shuffle"></i>
+                        <i class="fas fa-repeat" id="repeat"></i>
                     </div>
-                    <div class="progress-container">
-                        <input type="range" id="progress-bar" value="0" min="0" max="100">
-                    </div>
-                </div>
-                <div class="song-image">
-                    <img src="covers/default-cover.jpg" alt="Immagine Canzone">
                 </div>
             </div>
             <audio id="audio-player" src=""></audio>
         </main>
-    </div>
-
-    <div class="popup" id="popup">
-        <div class="popup-content">
-            <span class="close" id="close-popup">&times;</span>
-            <h3>Scarica le nostre app</h3>
-            <button id="download-echo">Scarica Echo for Windows</button>
-            <button id="download-music">Scarica Music for Android</button>
-        </div>
     </div>
 
     <script src="script.js"></script>
