@@ -166,55 +166,116 @@ const sidebar = document.getElementById('sidebar');
 
 // Funzione per caricare una canzone
 function loadSong(songIndex) {
+    if (songIndex < 0 || songIndex >= songs.length) {
+        if (songs.length > 0) {
+            currentSongIndex = 0; // Fallback alla prima canzone se l'indice è errato
+            songIndex = 0;
+        } else {
+            // Caso in cui non ci sono canzoni
+            songImageEl.src = 'covers/default-cover.jpg';
+            songTitleEl.textContent = 'Nessuna canzone';
+            songArtistEl.textContent = '';
+            if (audioPlayer.src !== '') audioPlayer.src = ''; // Pulisci src solo se necessario
+            if (downloadBtn) {
+                downloadBtn.href = '#';
+                downloadBtn.download = '';
+            }
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = null;
+                navigator.mediaSession.playbackState = "none";
+            }
+            progressBar.value = 0;
+            return;
+        }
+    }
     const song = songs[songIndex];
+
+    songTitleEl.textContent = song.title;
+    songArtistEl.textContent = song.artist;
+
+    if (downloadBtn) {
+        downloadBtn.href = song.audio;
+        const audioFileName = song.audio.substring(song.audio.lastIndexOf('/') + 1);
+        downloadBtn.download = `${song.artist} - ${song.title}.${audioFileName.split('.').pop()}`;
+    }
+
+    // Imposta la sorgente audio. Il browser è generalmente intelligente nel non ricaricare
+    // se l'URL assoluto risultante è lo stesso di quello corrente.
+    // Questo avvierà il processo di caricamento del browser se src è nuovo.
+    audioPlayer.src = song.audio;
 
     songImageEl.classList.add('fade-out');
     setTimeout(() => {
         songImageEl.src = song.image;
-        songTitleEl.textContent = song.title;
-        songArtistEl.textContent = song.artist;
-        audioPlayer.src = song.audio;
-        if (downloadBtn) {
-            downloadBtn.href = song.audio;
-            // Imposta il nome del file per il download (opzionale, ma migliora l'UX)
-            // Estrai il nome del file dal percorso audio
-            const audioFileName = song.audio.substring(song.audio.lastIndexOf('/') + 1);
-            downloadBtn.download = `${song.artist} - ${song.title}.${audioFileName.split('.').pop()}`;
-
-        }
-        songImageEl.classList.remove('fade-out');
-
-        // Media Session API
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: song.title,
                 artist: song.artist,
-                album: 'Bush Music Collection', // Puoi personalizzare o lasciare vuoto
-                artwork: [
-                    // È buona norma fornire diverse dimensioni se disponibili
-                    // Per ora usiamo la stessa immagine, il browser/OS la scalerà
-                    { src: song.image, sizes: '128x128', type: 'image/png' }, // Adatta tipo se usi jpg
-                    { src: song.image, sizes: '256x256', type: 'image/png' },
-                    { src: song.image, sizes: '512x512', type: 'image/png' }
+                album: 'Bush Music Collection',
+                artwork: [ // Fornisci artwork per la Media Session API
+                    { src: song.image, sizes: '128x128', type: 'image/jpeg' },
+                    { src: song.image, sizes: '256x256', type: 'image/jpeg' },
+                    { src: song.image, sizes: '512x512', type: 'image/jpeg' }
                 ]
             });
         }
-    }, 300);
-    progressBar.value = 0;
+        songImageEl.classList.remove('fade-out');
+    }, 150); // Timeout per l'effetto visivo dell'immagine
+
+    progressBar.value = 0; // Resetta la barra di avanzamento
 }
 
-// Funzioni di riproduzione
+// Funzione di riproduzione
 function playSong() {
-    audioPlayer.play().then(() => {
-        isPlaying = true;
-        playPauseBtn.classList.remove('fa-play');
-        playPauseBtn.classList.add('fa-pause');
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.playbackState = "playing";
+    if (songs.length === 0 || !audioPlayer.src || audioPlayer.src === window.location.href || audioPlayer.src.endsWith('/null')) {
+        pauseSong(); // Assicura che l'UI sia in stato di pausa se non c'è nulla da riprodurre
+        return;
+    }
+
+    const doPlay = () => {
+        const playPromise = audioPlayer.play();
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                // Riproduzione avviata con successo
+                isPlaying = true;
+                playPauseBtn.classList.remove('fa-play');
+                playPauseBtn.classList.add('fa-pause');
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
+            }).catch(error => {
+                // Errore durante audioPlayer.play() (es. autoplay bloccato dal browser)
+                console.error("Errore audioPlayer.play():", error);
+                pauseSong(); // Torna allo stato di pausa se play() è rifiutato
+            });
         }
-    }).catch(error => console.error("Errore durante la riproduzione:", error));
+    };
+
+    // Controlla se il media è pronto per la riproduzione
+    // readyState 4 === HTMLMediaElement.HAVE_ENOUGH_DATA (può suonare fino alla fine)
+    if (audioPlayer.readyState >= 4) {
+        doPlay();
+    } else {
+        // Se non è pronto, attendi l'evento 'canplaythrough'
+        const canPlayThroughListener = () => {
+            doPlay();
+            // Rimuovi i listener una volta usati per evitare duplicazioni
+            audioPlayer.removeEventListener('canplaythrough', canPlayThroughListener);
+            audioPlayer.removeEventListener('error', errorListener);
+        };
+        const errorListener = (e) => {
+            console.error("Errore caricamento audio:", e);
+            pauseSong();
+            audioPlayer.removeEventListener('canplaythrough', canPlayThroughListener);
+            audioPlayer.removeEventListener('error', errorListener);
+        };
+        // Aggiungi listener una tantum
+        audioPlayer.addEventListener('canplaythrough', canPlayThroughListener, { once: true });
+        audioPlayer.addEventListener('error', errorListener, { once: true });
+        // In alcuni casi, potrebbe essere necessario chiamare audioPlayer.load() se il caricamento si blocca,
+        // ma solitamente non è necessario se .src è stato appena modificato.
+    }
 }
 
+// Funzione Pausa
 function pauseSong() {
     audioPlayer.pause();
     isPlaying = false;
@@ -225,6 +286,7 @@ function pauseSong() {
     }
 }
 
+// Evento click Play/Pausa
 playPauseBtn.addEventListener('click', () => {
     isPlaying ? pauseSong() : playSong();
 });
@@ -241,62 +303,79 @@ progressBar.addEventListener('input', () => {
     }
 });
 
-// Logica canzone terminata (Shuffle/Repeat)
+// Logica canzone terminata
 audioPlayer.addEventListener('ended', () => {
+    if (songs.length === 0) return;
+
     if (repeatMode === 2) { // Repeat One
-        audioPlayer.currentTime = 0;
-        playSong();
+        audioPlayer.currentTime = 0; // Riavvolgi
+        playSong(); // E suona di nuovo
     } else {
-        handleNextSong(); // Chiama la logica per la prossima canzone
+        handleNextSong();
     }
 });
 
-// Funzione per gestire la prossima canzone (chiamata da nextBtn e da 'ended')
+// Funzione per gestire la prossima canzone
 function handleNextSong() {
-    let previousSongIndex = currentSongIndex; // Per evitare ripetizione immediata in shuffle
+    if (songs.length === 0) {
+        pauseSong();
+        return;
+    }
+    // Gestione del caso con una sola canzone
+    if (songs.length === 1 && repeatMode !== 2) {
+        // Se non è "repeat one" (già gestito da 'ended'), riavvolgi e suona.
+        audioPlayer.currentTime = 0;
+        playSong();
+        return;
+    }
+
+    let previousSongIndex = currentSongIndex;
 
     if (isShuffle) {
-        if (songs.length <= 1) {
-            currentSongIndex = 0;
-        } else {
+        if (songs.length > 1) {
             do {
                 currentSongIndex = Math.floor(Math.random() * songs.length);
-            } while (currentSongIndex === previousSongIndex); // Evita di suonare la stessa canzone di fila
+            } while (currentSongIndex === previousSongIndex);
+        } else {
+             currentSongIndex = 0; // Unica canzone disponibile
         }
     } else { // No shuffle
         currentSongIndex++;
     }
 
-    // Gestione fine lista e repeat all
+    // Gestione fine lista e modalità repeat
     if (currentSongIndex >= songs.length) {
         if (repeatMode === 1) { // Repeat All
             currentSongIndex = 0;
-        } else { // No repeat (e non shuffle, o shuffle ha esaurito le opzioni non ripetute)
-            if (!isShuffle) { // Se non è shuffle, fermati alla fine della lista (o vai all'inizio e metti in pausa)
-                currentSongIndex = 0; 
-                loadSong(currentSongIndex);
-                pauseSong();
-                return; // Esci per non avviare la riproduzione automatica
-            }
-            // Se è shuffle e in qualche modo si arriva qui (improbabile con la logica do-while), 
-            // si potrebbe reimpostare o gestire diversamente, ma la logica attuale dovrebbe prevenire.
+        } else if (repeatMode === 0 && !isShuffle) { // No Repeat e No Shuffle
+            currentSongIndex = 0; // Torna alla prima canzone
+            loadSong(currentSongIndex);
+            playSong(); // Riproduci automaticamente
+            return;     // Uscita anticipata perché la gestione è completa
+        } else {
+            // Altri casi (es. shuffle che finisce, o stato imprevisto), torna a 0
+            currentSongIndex = 0;
         }
     }
-    
     loadSong(currentSongIndex);
-    playSong(); // Riproduci la nuova canzone caricata
+    playSong();
 }
 
 nextBtn.addEventListener('click', handleNextSong);
 
-// Canzone precedente (ignora shuffle per semplicità, fa il giro della lista)
+// Canzone precedente
 function handlePrevSong() {
+    if (songs.length === 0) return;
+    if (songs.length === 1) {
+        audioPlayer.currentTime = 0; // Riavvolgi se c'è una sola canzone
+        playSong();
+        return;
+    }
     currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
     loadSong(currentSongIndex);
-    playSong(); // Riproduci sempre quando si preme manualmente prev
+    playSong();
 }
 prevBtn.addEventListener('click', handlePrevSong);
-
 
 // Shuffle
 shuffleBtn.addEventListener('click', () => {
@@ -309,12 +388,12 @@ function updateRepeatButtonState() {
     repeatBtn.classList.remove('active-repeat-all', 'active-repeat-one');
     if (repeatMode === 1) {
         repeatBtn.classList.add('active-repeat-all');
-        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i>'; // Icona standard per repeat all
+        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i>';
     } else if (repeatMode === 2) {
         repeatBtn.classList.add('active-repeat-one');
-        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i><span class="repeat-one-badge">1</span>'; // Icona con badge '1'
+        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i><span class="repeat-one-badge">1</span>';
     } else {
-        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i>'; // Icona standard quando off
+        repeatBtn.innerHTML = '<i class="fas fa-repeat"></i>';
     }
 }
 repeatBtn.addEventListener('click', () => {
@@ -322,25 +401,36 @@ repeatBtn.addEventListener('click', () => {
     updateRepeatButtonState();
 });
 
-
 // Generazione lista canzoni
 function displaySongs(songArray) {
     songListEl.innerHTML = '';
+    if (songArray.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = "Nessuna canzone disponibile.";
+        li.style.textAlign = "center";
+        li.style.cursor = "default";
+        songListEl.appendChild(li);
+        return;
+    }
+
     songArray.forEach((song) => {
         const li = document.createElement('li');
         li.textContent = song.title;
-        li.tabIndex = 0; // Per accessibilità (navigazione da tastiera)
+        li.tabIndex = 0;
         li.setAttribute('role', 'button');
 
         li.addEventListener('click', () => {
-            currentSongIndex = songs.indexOf(song);
-            loadSong(currentSongIndex);
-            playSong();
-            if (sidebar.classList.contains('show')) {
-                sidebar.classList.remove('show');
+            const originalIndex = songs.findIndex(s => s.audio === song.audio && s.title === song.title);
+            if (originalIndex !== -1) {
+                currentSongIndex = originalIndex;
+                loadSong(currentSongIndex);
+                playSong();
+                if (sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                }
             }
         });
-        li.addEventListener('keydown', (e) => { // Per accessibilità
+        li.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 li.click();
             }
@@ -352,7 +442,10 @@ function displaySongs(songArray) {
 // Ricerca
 searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase();
-    const filteredSongs = songs.filter(song => song.title.toLowerCase().includes(query) || song.artist.toLowerCase().includes(query));
+    const filteredSongs = songs.filter(song =>
+        song.title.toLowerCase().includes(query) ||
+        (song.artist && song.artist.toLowerCase().includes(query)) // Aggiunto controllo per artist
+    );
     displaySongs(filteredSongs);
 });
 
@@ -373,15 +466,24 @@ if (menuButton && sidebar) {
 
 // Media Session Action Handlers
 if ('mediaSession' in navigator) {
-    navigator.mediaSession.setActionHandler('play', playSong);
-    navigator.mediaSession.setActionHandler('pause', pauseSong);
-    navigator.mediaSession.setActionHandler('previoustrack', handlePrevSong);
-    navigator.mediaSession.setActionHandler('nexttrack', handleNextSong);
-    // Potresti aggiungere 'seekbackward', 'seekforward', 'stop' ecc.
+    navigator.mediaSession.setActionHandler('play', () => { if (songs.length > 0) playSong(); });
+    navigator.mediaSession.setActionHandler('pause', () => { if (songs.length > 0) pauseSong(); });
+    navigator.mediaSession.setActionHandler('previoustrack', () => { if (songs.length > 0) handlePrevSong(); });
+    navigator.mediaSession.setActionHandler('nexttrack', () => { if (songs.length > 0) handleNextSong(); });
 }
 
-
 // Inizializzazione
-displaySongs(songs);
-loadSong(currentSongIndex);
-updateRepeatButtonState(); // Imposta stato iniziale bottone repeat
+function initializePlayer() {
+    displaySongs(songs);
+    if (songs.length > 0) {
+        loadSong(currentSongIndex); // Carica la prima canzone
+        pauseSong(); // Assicura che l'UI sia "paused" e pronta per il play dell'utente
+    } else {
+        // Gestisci UI per nessuna canzone, se necessario (loadSong lo fa già in parte)
+        loadSong(-1); // Chiama loadSong per impostare lo stato "nessuna canzone"
+        pauseSong();
+    }
+    updateRepeatButtonState();
+}
+
+initializePlayer();
