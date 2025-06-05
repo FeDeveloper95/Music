@@ -127,6 +127,12 @@ const songs = [
         audio: 'audio/still-by-your-side.mp3'
     },
     {
+        title: 'Whatever',
+        artist: 'Bush',
+        image: 'covers/Whatever.png',
+        audio: 'audio/Whatever.mp3'
+    },
+    {
         title: 'Why Do I',
         artist: 'Bush',
         image: 'covers/why-do-i.jpg',
