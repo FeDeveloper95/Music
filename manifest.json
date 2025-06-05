@@ -3,15 +3,15 @@
     "short_name": "Music",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
+    "background_color": "#0D1F2A",
+    "theme_color": "#0D1F2A",
     "description": "Tutte le canzoni di Bush, ora in un solo posto!",
     "icons": [
         {
             "src": "icons/icon-72x72.png",
             "sizes": "72x72",
             "type": "image/png",
-            "purpose": "any" 
+            "purpose": "any"
         },
         {
             "src": "icons/icon-96x96.png",
@@ -41,7 +41,7 @@
             "src": "icons/icon-192x192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable" /* Aggiunto 'maskable' */
+            "purpose": "any maskable"
         },
         {
             "src": "icons/icon-384x384.png",
@@ -53,11 +53,11 @@
             "src": "icons/icon-512x512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable" /* Aggiunto 'maskable' */
+            "purpose": "any maskable"
         },
-        { /* Nuova icona monocromatica */
-            "src": "icons/icon-monochrome.png", /* Cambia con il nome del tuo file */
-            "sizes": "192x192", /* O la dimensione che hai scelto */
+        {
+            "src": "icons/icon-monochrome.png",
+            "sizes": "192x192",
             "type": "image/png",
             "purpose": "monochrome"
         }
