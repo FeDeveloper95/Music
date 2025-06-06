@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <title>Music</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0D1F2A">
+    <meta name="theme-color" content="#ffffff"> 
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
@@ -24,31 +24,40 @@
         <main class="main-content">
             <button id="menu-button">
                 </button>
-            <div class="song-image">
-                <img src="covers/default-cover.jpg" alt="Immagine Canzone">
+            
+            <div id="home-view">
+                <h1>Hey, <span id="username" contenteditable="true">utente</span>!</h1>
+                <p>Scrivi il tuo nome e premi Invio per salvare.<br>Seleziona una canzone per iniziare.</p>
             </div>
-            <div class="song-details">
-                <h2>Titolo Canzone</h2>
-                <p>Bush</p>
-            </div>
-            <div class="player-container"> <div class="controls-container">
-                    <div class="progress-container">
-                        <input type="range" id="progress-bar" value="0" min="0" max="100">
-                    </div>
-                    <div class="controls">
-                        <i class="fas fa-backward" id="prev"></i>
-                        <i class="fas fa-play" id="play-pause"></i>
-                        <i class="fas fa-forward" id="next"></i>
-                    </div>
-                    <div class="secondary-controls">
-                        <a id="download" href="#" download>
-                            <i class="fas fa-download"></i>
-                        </a>
-                        <i class="fas fa-shuffle" id="shuffle"></i>
-                        <i class="fas fa-repeat" id="repeat"></i>
+
+            <div id="player-view" class="view-hidden">
+                <div class="song-image">
+                    <img src="covers/default-cover.jpg" alt="Immagine Canzone">
+                </div>
+                <div class="song-details">
+                    <h2>Titolo Canzone</h2>
+                    <p>Bush</p>
+                </div>
+                <div class="player-container"> <div class="controls-container">
+                        <div class="progress-container">
+                            <input type="range" id="progress-bar" value="0" min="0" max="100">
+                        </div>
+                        <div class="controls">
+                            <i class="fas fa-backward" id="prev"></i>
+                            <i class="fas fa-play" id="play-pause"></i>
+                            <i class="fas fa-forward" id="next"></i>
+                        </div>
+                        <div class="secondary-controls">
+                            <a id="download" href="#" download>
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <i class="fas fa-shuffle" id="shuffle"></i>
+                            <i class="fas fa-repeat" id="repeat"></i>
+                        </div>
                     </div>
                 </div>
             </div>
+            
             <audio id="audio-player" src=""></audio>
         </main>
     </div>
