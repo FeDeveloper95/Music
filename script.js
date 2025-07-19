@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
             audio: 'audio/by-your-side.mp3'
         },
         {
+            title: 'Can\'t Go Back',
+            artist: 'Bush',
+            image: 'covers/cant-go-back.png',
+            audio: 'audio/cant-go-back.mp3'
+        },
+        {
             title: 'Crazy of You',
             artist: 'Bush',
             image: 'covers/crazy-of-you.png',
