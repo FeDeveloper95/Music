@@ -105,6 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
             audio: 'audio/more-than-ever.mp3'
         },
         {
+            title: 'North Star',
+            artist: 'Bush',
+            image: 'covers/north-star.jpg',
+            audio: 'audio/north-star.mp3'
+        },
+        {
             title: 'On my way',
             artist: 'Bush, Alan Walker, Sabrina Carpenter',
             image: 'covers/on-my-way.jpg',
