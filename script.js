@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
             audio: 'audio/by-your-side.mp3'
         },
         {
+            title: 'Can\'t Go Back',
+            artist: 'Bush',
+            image: 'covers/cant-go-back.png',
+            audio: 'audio/cant-go-back.mp3'
+        },
+        {
             title: 'Crazy of You',
             artist: 'Bush',
             image: 'covers/crazy-of-you.png',
@@ -99,6 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
             audio: 'audio/more-than-ever.mp3'
         },
         {
+            title: 'North Star',
+            artist: 'Bush',
+            image: 'covers/north-star.jpg',
+            audio: 'audio/north-star.mp3'
+        },
+        {
             title: 'On my way',
             artist: 'Bush, Alan Walker, Sabrina Carpenter',
             image: 'covers/on-my-way.jpg',
@@ -170,6 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoView = document.getElementById('info-view');
     const infoBtn = document.getElementById('info-btn');
     const closeInfoBtn = document.getElementById('close-info-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const changelogBtn = document.getElementById('changelog-btn');
+    const changelogView = document.getElementById('changelog-view');
+    const closeChangelogBtn = document.getElementById('close-changelog-btn');
     
     // --- FUNZIONI DI CONTROLLO UI ---
     function showMainView(viewName) {
@@ -178,12 +194,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function toggleSidebar(show) { appContainer.classList.toggle('sidebar-open', show); }
     function toggleInfoPopup(show) { infoView.classList.toggle('visible', show); }
+    function toggleChangelogPopup(show) { changelogView.classList.toggle('visible', show); }
     
     // --- FUNZIONI PLAYER ---
     function updatePlayerStateUI() {
         playPauseBtn.classList.toggle('is-playing', isPlaying);
         playPauseIcon.textContent = isPlaying ? 'pause' : 'play_arrow';
     }
+    
+    function formatSongTitleForUrl(title) {
+        return title
+            .toLowerCase()
+            .replace(/[àáâãäå]/g, 'a')
+            .replace(/[èéêë]/g, 'e')
+            .replace(/[ìíîï]/g, 'i')
+            .replace(/[òóôõö]/g, 'o')
+            .replace(/[ùúûü]/g, 'u')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
     function loadSong(songIndex, autoPlay = false) {
         const song = songs[songIndex]; if (!song) return;
         currentSongIndex = songIndex;
@@ -194,12 +225,21 @@ document.addEventListener('DOMContentLoaded', () => {
             history.pushState(null, '', window.location.pathname);
             if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
             isPlaying = false; updatePlayerStateUI();
+            downloadBtn.classList.add('hidden');
             return;
         }
         showMainView('player');
         songTitleEl.textContent = song.title; songArtistEl.textContent = song.artist;
         songImageEl.src = song.image; audioPlayer.src = song.audio;
-        location.hash = songs.indexOf(song) > 0 ? songs.indexOf(song) : '';
+        
+        // Imposta il link basato sul nome della canzone
+        const songUrlTitle = formatSongTitleForUrl(song.title);
+        history.pushState(null, '', '#' + songUrlTitle);
+
+        // Aggiungi il link di download
+        downloadBtn.href = song.audio;
+        downloadBtn.classList.remove('hidden');
+
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({ title: song.title, artist: song.artist, album: 'Music Player', artwork: [{ src: song.image, sizes: '512x512', type: 'image/jpeg' }] });
         }
@@ -266,6 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setTimeout(() => easterEggContainer.innerHTML = '', 4000);
     }
+    
+    function getSongIndexFromHash(hash) {
+        if (!hash) return 0;
+        const formattedTitle = hash.replace(/^#/, '');
+        return songs.findIndex(song => !song.isHome && formatSongTitleForUrl(song.title) === formattedTitle);
+    }
 
     // --- EVENT LISTENERS ---
     playPauseBtn.addEventListener('click', () => isPlaying ? pauseSong() : playSong());
@@ -288,6 +334,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
     infoBtn.addEventListener('click', () => toggleInfoPopup(true));
     closeInfoBtn.addEventListener('click', () => toggleInfoPopup(false));
+    changelogBtn.addEventListener('click', () => toggleChangelogPopup(true));
+    closeChangelogBtn.addEventListener('click', () => toggleChangelogPopup(false));
     
     mobileNav.addEventListener('click', e => {
         const target = e.target.closest('.nav-item'); if (!target) return;
@@ -305,6 +353,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    window.addEventListener('hashchange', () => {
+        const newIndex = getSongIndexFromHash(window.location.hash);
+        if (newIndex >= 0 && newIndex < songs.length) {
+            loadSong(newIndex, true);
+        } else {
+            loadSong(0);
+        }
+    });
+
     if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('play', playSong); navigator.mediaSession.setActionHandler('pause', pauseSong); navigator.mediaSession.setActionHandler('previoustrack', handlePrevSong); navigator.mediaSession.setActionHandler('nexttrack', handleNextSong); }
 
     // --- INIZIALIZZAZIONE ---
@@ -313,10 +371,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUsername(); 
         updateRepeatButton(); 
         shuffleBtn.classList.toggle('active', isShuffle);
-        const hash = location.hash.substring(1);
-        let startIndex = hash ? parseInt(hash) : 0;
-        if (isNaN(startIndex) || startIndex >= songs.length) startIndex = 0;
-        loadSong(startIndex);
+
+        const hash = window.location.hash;
+        const startIndex = getSongIndexFromHash(hash);
+        loadSong(startIndex, startIndex !== 0);
+        
         updateProgressBar();
     }
     initialize();

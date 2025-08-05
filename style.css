@@ -90,6 +90,9 @@ body { font-family: var(--font-family-sans); margin: 0; height: 100vh; width: 10
 .view.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
 .home-icon-container { width: 120px; height: 120px; background: var(--cover-bg); border-radius: 50%; display: grid; place-items: center; margin-bottom: 24px; }
 .home-icon-container .material-symbols-outlined { font-size: 64px; color: var(--text-primary); }
+#home-view { position: relative; }
+#home-view .page-header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 16px; box-sizing: border-box; }
+#changelog-btn { position: absolute; top: 16px; right: 16px; }
 #home-view h1 { font-size: 2em; font-weight: 500; }
 #username:focus { background-color: var(--search-bg); outline: none; border-radius: 8px; padding: 2px 6px; }
 .player-content { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 400px; }
@@ -111,14 +114,16 @@ body { font-family: var(--font-family-sans); margin: 0; height: 100vh; width: 10
 #progress-bar::-moz-range-thumb { width: 4px; height: 16px; background: var(--progress-thumb-bg); border-radius: 2px; border: none; }
 .time-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 0 2px; }
 .controls { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+#download-btn { margin-top: 16px; }
 .icon-button { position: relative; overflow: hidden; border: none; background: transparent; color: var(--icon-button-color); width: 48px; height: 48px; display: grid; place-items: center; cursor: pointer; transition: background-color 0.2s; border-radius: 50%; }
 .icon-button::before, .fab::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: inherit; background-color: var(--state-layer); opacity: 0; transform: scale(0); transition: transform 0.3s, opacity 0.3s; }
 .icon-button:hover::before, .fab:hover::before { transform: scale(1); opacity: 0.08; }
 .icon-button:active::before, .fab:active::before { transform: scale(1); opacity: 0.12; }
 .icon-button.active { background-color: var(--icon-button-active-bg); color: var(--icon-button-active-color); }
 .icon-button.active .material-symbols-outlined, .fab .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
-.fab { position: relative; overflow: hidden; border: none; background-color: var(--fab-bg); color: var(--fab-icon); width: 64px; height: 64px; display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 50%; transition: background-color 0.2s, border-radius 0.5s var(--motion-easing); }
-.fab.is-playing { border-radius: 20px; }
+.fab { position: relative; overflow: hidden; border: none; background-color: var(--fab-bg); color: var(--fab-icon); width: 64px; height: 64px; display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 16px; transition: border-radius 0.2s ease-out; }
+.fab.is-playing { border-radius: 16px; }
+.fab:active { border-radius: 8px; transition: border-radius 0.1s ease-out; }
 .fab .material-symbols-outlined { font-size: 36px; }
 
 /* --- Popup Informazioni --- */
@@ -144,9 +149,26 @@ body { font-family: var(--font-family-sans); margin: 0; height: 100vh; width: 10
 .sidebar-open .sidebar-overlay { display: block; opacity: 1; }
 .mobile-nav { display: none; }
 
-/* --- Media Query per Mobile --- */
+@media (min-width: 769px) {
+    #home-view .page-header h2 {
+        display: none;
+    }
+    .main-content { position: relative; }
+    #changelog-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+    }
+    .close-sidebar-btn {
+        display: none;
+    }
+}
+
 @media (max-width: 768px) {
     .app-container { flex-direction: column; padding-bottom: 80px; }
+    #home-view .page-header {
+      padding: 0 16px;
+    }
     .sidebar {
         position: fixed; top: 0; left: 0; height: 100%; z-index: 1002;
         transform: translateX(-100%); transition: transform var(--motion-duration) var(--motion-easing);
