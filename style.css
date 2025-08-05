@@ -54,6 +54,7 @@
 
 body { font-family: var(--font-family-sans); margin: 0; height: 100vh; width: 100vw;
     background-color: var(--app-bg); color: var(--text-primary); overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; transition: font-variation-settings 0.3s ease; }
 .app-container { height: 100%; width: 100%; display: flex; position: relative; overflow: hidden; }
@@ -166,8 +167,14 @@ body { font-family: var(--font-family-sans); margin: 0; height: 100vh; width: 10
 
 @media (max-width: 768px) {
     .app-container { flex-direction: column; padding-bottom: 80px; }
+    #home-view { padding-top: 0; }
     #home-view .page-header {
-      padding: 0 16px;
+      padding: 16px;
+    }
+    #changelog-btn {
+      position: relative;
+      top: 0;
+      right: 0;
     }
     .sidebar {
         position: fixed; top: 0; left: 0; height: 100%; z-index: 1002;
