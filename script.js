@@ -172,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const homeView = document.getElementById('home-view');
     const playerView = document.getElementById('player-view');
     const usernameEl = document.getElementById('username');
+    const welcomeTextEl = document.querySelector('#home-view .welcome-text'); // Nuovo selettore per il testo
     const currentTimeEl = document.getElementById('current-time');
     const totalTimeEl = document.getElementById('total-time');
     const mobileNav = document.getElementById('mobile-nav');
@@ -292,7 +293,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EASTER EGG & ALTRO ---
     const updateRepeatButton = () => { repeatBtn.classList.toggle('active', repeatMode > 0); repeatBtn.querySelector('.material-symbols-outlined').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; };
     const loadUsername = () => { const name = localStorage.getItem('musicPlayerUsername'); if (name) usernameEl.textContent = name; };
-    const saveUsername = () => { const name = usernameEl.textContent.trim(); if (name) { localStorage.setItem('musicPlayerUsername', name); if(name.toLowerCase() === 'gaia') showGaiaEasterEgg(); } };
+    const saveUsername = () => {
+        const name = usernameEl.textContent.trim();
+        if (name) {
+            localStorage.setItem('musicPlayerUsername', name);
+            // Nasconde il testo di benvenuto dopo aver salvato il nome
+            const welcomeText = document.querySelector('#home-view p');
+            if (welcomeText) {
+                welcomeText.style.display = 'none';
+            }
+            if(name.toLowerCase() === 'gaia') showGaiaEasterEgg();
+        }
+    };
     function showGaiaEasterEgg() {
         easterEggContainer.innerHTML = '';
         for (let i = 0; i < 15; i++) {
