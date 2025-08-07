@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Music</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F8F9FC">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1A1C1E">
     
@@ -29,33 +29,30 @@
                 <ul class="song-list" id="song-list"></ul>
             </div>
             <div class="sidebar-footer">
-                <ul class="song-list" id="settings-list">
-                     <li class="settings-list-item" id="info-btn">
-                        <span class="material-symbols-outlined">info</span>
-                        <span>Informazioni</span>
+                <div class="settings-menu-container">
+                     <li class="settings-list-item" id="settings-btn">
+                        <span class="material-symbols-outlined">settings</span>
+                        <span>Impostazioni ed altro</span>
                     </li>
-                </ul>
+                </div>
             </div>
         </aside>
 
         <main class="main-content">
-            <div id="home-view" class="view">
+            <div id="home-view" class="view view-visible">
                 <div class="page-header">
                     <h2 class="sidebar-title"></h2>
-                    <button class="icon-button" id="changelog-btn">
-                        <span class="material-symbols-outlined">description</span>
-                    </button>
                 </div>
                 <div class="home-icon-container">
                     <span class="material-symbols-outlined">music_note</span>
                 </div>
                 <h1>Ciao, <span id="username" contenteditable="true">utente</span>!</h1>
-                <p>Scrivi il tuo nome e premi Invio.<br>Seleziona un brano per iniziare.</p>
+                <p id="welcome-message">Seleziona un brano per iniziare.</p>
             </div>
 
             <div id="player-view" class="view hidden">
                 <div class="player-content">
-                    <div class="song-image">
+                    <div class="song-image" id="song-image-touch-area">
                         <img src="covers/default-cover.jpg" alt="Immagine Canzone">
                     </div>
                     <div class="song-details">
@@ -76,9 +73,12 @@
                         <button class="icon-button" id="next"><span class="material-symbols-outlined">skip_next</span></button>
                         <button class="icon-button" id="repeat"><span class="material-symbols-outlined">repeat</span></button>
                     </div>
-                    <a id="download-btn" class="icon-button hidden" download>
-                        <span class="material-symbols-outlined">download</span>
-                    </a>
+                    <div class="player-buttons-bottom">
+                         <a id="download-btn" class="player-button-bottom" download>
+                            <span class="material-symbols-outlined">download</span>
+                        </a>
+                         <button class="player-button-bottom" id="share-btn"><span class="material-symbols-outlined">share</span></button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -117,31 +117,49 @@
         <div id="changelog-view" class="fullscreen-view hidden">
             <div class="popup-content">
                 <div class="page-header">
-                    <h2>Changelog v3.1.3</h2>
+                    <h2>Changelog v3.3.0</h2>
                     <button class="icon-button" id="close-changelog-btn">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
                 <div class="page-content">
                     <div class="info-section">
-                        <h3>Novità</h3>
+                        <h3>Correzioni Critiche</h3>
                         <ul>
-                            <li>Download dei brani: È stata reintrodotta la funzionalità di download.</li>
-                            <li>URL semplificati: I link dei brani ora usano il nome del brano invece dell'indice numerico.</li>
-                            <li>Modalità offline avanzata: L'applicazione è ora completamente fruibile offline, inclusi tutti i brani e le copertine.</li>
-                            <li>Changelog: È stato aggiunto questo popup per informare sulle nuove funzionalità.</li>
-                            <li>Tasto play: L'animazione del tasto Play/Pausa è stata aggiornata per seguire le regole del design Material 3 Expressive.</li>
-                            <li>Tasti multimediali: Le animazioni dei tasti multimediali sono state aggiornate per seguire le regole del design Material 3 Expressive.</li>
+                            <li><b>Audio Ripristinato:</b> Risolto il bug che causava l'assenza di audio. Il sistema di riproduzione è stato semplificato e reso più stabile, come nelle versioni precedenti.</li>
+                             <li><b>Layout Corretto:</b> Risolto il bug di layout che causava la sovrapposizione della schermata Home e del Player.</li>
                         </ul>
                     </div>
                     <div class="info-section">
-                        <h3>Bugfix</h3>
+                        <h3>Miglioramenti</h3>
                         <ul>
-                            <li>Risolto un bug che impediva il corretto funzionamento del pulsante "Successivo" in modalità ripeti.</li>
-                            <li>Migliorata la gestione degli stati di riproduzione.</li>
-                            <li>Migliorata la visualizzazione degli elementi su dispositivi desktop e tablet.</li>
-                            <li>Rimossa la scritta Home sia su desktop che su mobile.</li>
+                           <li><b>Menu Impostazioni con nuove funzioni:</b> Tema, Download di tutti i brani, Copia link; ho spostato qui anche i pulsanti Changelog e Informazioni.</li>
                         </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="theme-view" class="fullscreen-view hidden">
+            <div class="popup-content">
+                <div class="page-header">
+                    <h2>Tema</h2>
+                    <button class="icon-button" id="close-theme-btn">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="page-content">
+                    <div class="theme-option">
+                        <input type="radio" id="theme-system" name="theme" value="system" checked>
+                        <label for="theme-system">Predefinito del dispositivo</label>
+                    </div>
+                    <div class="theme-option">
+                        <input type="radio" id="theme-light" name="theme" value="light">
+                        <label for="theme-light">Chiaro</label>
+                    </div>
+                    <div class="theme-option">
+                        <input type="radio" id="theme-dark" name="theme" value="dark">
+                        <label for="theme-dark">Scuro</label>
                     </div>
                 </div>
             </div>
@@ -155,6 +173,31 @@
 
         <div class="sidebar-overlay" id="sidebar-overlay"></div>
         <div id="easter-egg-container"></div>
+        <div id="toast-notification" class="toast"></div>
+        <div id="offline-indicator" class="toast hidden">Sei offline. La musica precedentemente caricata è disponibile.</div>
+        
+        <ul class="settings-menu" id="settings-menu">
+            <li class="menu-item" id="theme-btn">
+                <span class="material-symbols-outlined">palette</span>
+                <span>Tema</span>
+            </li>
+            <li class="menu-item" id="download-all-btn">
+                <span class="material-symbols-outlined">download</span>
+                <span>Download di tutte le canzoni</span>
+            </li>
+            <li class="menu-item" id="copy-link-btn">
+                <span class="material-symbols-outlined">link</span>
+                <span>Copia link</span>
+            </li>
+            <li class="menu-item" id="changelog-btn">
+                <span class="material-symbols-outlined">description</span>
+                <span>Changelog</span>
+            </li>
+            <li class="menu-item" id="info-btn">
+                <span class="material-symbols-outlined">info</span>
+                <span>Informazioni</span>
+            </li>
+        </ul>
     </div>
 
     <audio id="audio-player" src=""></audio>
