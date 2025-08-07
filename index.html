@@ -17,11 +17,11 @@
 <body>
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header" id="sidebar-header">
+                <h2 class="sidebar-title">Tutti i brani</h2>
+                <button class="icon-button close-sidebar-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
             <div class="sidebar-content">
-                <div class="sidebar-header">
-                    <h2 class="sidebar-title">Tutti i brani</h2>
-                    <button class="icon-button close-sidebar-btn"><span class="material-symbols-outlined">close</span></button>
-                </div>
                 <div class="search-container">
                     <span class="material-symbols-outlined">search</span>
                     <input type="text" id="search" placeholder="Cerca brani o artisti">
@@ -39,46 +39,74 @@
         </aside>
 
         <main class="main-content">
-            <div id="home-view" class="view view-visible">
-                <div class="page-header">
-                    <h2 class="sidebar-title"></h2>
+            <div class="main-content-inner">
+                <div id="home-view" class="view active">
+                    <div class="page-header">
+                        <h2 class="sidebar-title"></h2>
+                    </div>
+                    <div class="home-icon-container">
+                        <span class="material-symbols-outlined">music_note</span>
+                    </div>
+                    <h1>Ciao, <span id="username" contenteditable="true">utente</span>!</h1>
+                    <p id="welcome-message">Seleziona un brano per iniziare.</p>
                 </div>
-                <div class="home-icon-container">
-                    <span class="material-symbols-outlined">music_note</span>
-                </div>
-                <h1>Ciao, <span id="username" contenteditable="true">utente</span>!</h1>
-                <p id="welcome-message">Seleziona un brano per iniziare.</p>
-            </div>
 
-            <div id="player-view" class="view hidden">
-                <div class="player-content">
-                    <div class="song-image" id="song-image-touch-area">
-                        <img src="covers/default-cover.jpg" alt="Immagine Canzone">
-                    </div>
-                    <div class="song-details">
-                        <h2>Titolo Canzone</h2>
-                        <p>Artista</p>
-                    </div>
-                    <div class="progress-container">
-                        <input type="range" id="progress-bar" value="0">
-                        <div class="time-labels">
-                            <span id="current-time">0:00</span>
-                            <span id="total-time">0:00</span>
+                <div id="player-view" class="view">
+                    <div class="player-content">
+                        <div class="song-image" id="song-image-touch-area">
+                            <img src="covers/default-cover.jpg" alt="Immagine Canzone">
+                        </div>
+                        <div class="song-details">
+                            <h2>Titolo Canzone</h2>
+                            <p>Artista</p>
+                        </div>
+                        <div class="progress-container">
+                            <input type="range" id="progress-bar" value="0">
+                            <div class="time-labels">
+                                <span id="current-time">0:00</span>
+                                <span id="total-time">0:00</span>
+                            </div>
+                        </div>
+                        <div class="controls">
+                            <button class="icon-button" id="shuffle"><span class="material-symbols-outlined">shuffle</span></button>
+                            <button class="icon-button" id="prev"><span class="material-symbols-outlined">skip_previous</span></button>
+                            <button class="fab" id="play-pause"><span class="material-symbols-outlined">play_arrow</span></button>
+                            <button class="icon-button" id="next"><span class="material-symbols-outlined">skip_next</span></button>
+                            <button class="icon-button" id="repeat"><span class="material-symbols-outlined">repeat</span></button>
+                        </div>
+                        <div class="player-buttons-bottom">
+                             <a id="download-btn" class="player-button-bottom" download>
+                                <span class="material-symbols-outlined">download</span>
+                            </a>
+                             <button class="player-button-bottom" id="share-btn"><span class="material-symbols-outlined">share</span></button>
                         </div>
                     </div>
-                    <div class="controls">
-                        <button class="icon-button" id="shuffle"><span class="material-symbols-outlined">shuffle</span></button>
-                        <button class="icon-button" id="prev"><span class="material-symbols-outlined">skip_previous</span></button>
-                        <button class="fab" id="play-pause"><span class="material-symbols-outlined">play_arrow</span></button>
-                        <button class="icon-button" id="next"><span class="material-symbols-outlined">skip_next</span></button>
-                        <button class="icon-button" id="repeat"><span class="material-symbols-outlined">repeat</span></button>
+                </div>
+                 <div id="activity-page" class="page-view hidden">
+                    <div class="page-header">
+                        <button class="icon-button" id="back-to-settings-btn">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                        <h2 class="page-title">La tua attività</h2>
+                        <button class="icon-button" id="activity-menu-btn">
+                            <span class="material-symbols-outlined">more_vert</span>
+                        </button>
                     </div>
-                    <div class="player-buttons-bottom">
-                         <a id="download-btn" class="player-button-bottom" download>
-                            <span class="material-symbols-outlined">download</span>
-                        </a>
-                         <button class="player-button-bottom" id="share-btn"><span class="material-symbols-outlined">share</span></button>
+                    <div class="page-content">
+                        <h3 class="activity-section-title">Top played</h3>
+                        <div id="top-played-container" class="expressive-container">
+                            </div>
+                
+                        <h3 class="activity-section-title">Altre</h3>
+                        <ul class="activity-list expressive-container" id="others-played-list">
+                            </ul>
                     </div>
+                    <ul class="settings-menu" id="activity-menu">
+                        <li class="menu-item" id="reset-activity-btn">
+                            <span class="material-symbols-outlined">delete</span>
+                            <span>Resetta attività</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </main>
@@ -117,23 +145,23 @@
         <div id="changelog-view" class="fullscreen-view hidden">
             <div class="popup-content">
                 <div class="page-header">
-                    <h2>Changelog v3.3.0</h2>
+                    <h2>Changelog v3.4</h2>
                     <button class="icon-button" id="close-changelog-btn">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
                 <div class="page-content">
                     <div class="info-section">
-                        <h3>Correzioni Critiche</h3>
+                        <h3>Nuove Funzionalità</h3>
                         <ul>
-                            <li><b>Audio Ripristinato:</b> Risolto il bug che causava l'assenza di audio. Il sistema di riproduzione è stato semplificato e reso più stabile, come nelle versioni precedenti.</li>
-                             <li><b>Layout Corretto:</b> Risolto il bug di layout che causava la sovrapposizione della schermata Home e del Player.</li>
+                            <li><b>Pagina Attività:</b> Introdotta una nuova pagina "La tua attività" per visualizzare le canzoni più ascoltate.</li>
+                            <li><b>Reset Attività:</b> Aggiunta l'opzione per resettare le statistiche di ascolto.</li>
                         </ul>
-                    </div>
-                    <div class="info-section">
-                        <h3>Miglioramenti</h3>
+                        <h3>Miglioramenti UI/UX</h3>
                         <ul>
-                           <li><b>Menu Impostazioni con nuove funzioni:</b> Tema, Download di tutti i brani, Copia link; ho spostato qui anche i pulsanti Changelog e Informazioni.</li>
+                            <li><b>Design Espressivo:</b> Applicato un nuovo stile coerente alla pagina attività e alla lista brani nella sidebar.</li>
+                            <li><b>Sidebar Dinamica:</b> L'intestazione della sidebar ora si riduce elegantemente durante lo scorrimento.</li>
+                            <li><b>UX Mobile Migliorata:</b> La navbar inferiore scompare quando si visualizzano pagine a schermo intero e la tab attiva si aggiorna automaticamente alla chiusura della sidebar.</li>
                         </ul>
                     </div>
                 </div>
@@ -177,6 +205,10 @@
         <div id="offline-indicator" class="toast hidden">Sei offline. La musica precedentemente caricata è disponibile.</div>
         
         <ul class="settings-menu" id="settings-menu">
+            <li class="menu-item" id="activity-btn">
+                <span class="material-symbols-outlined">analytics</span>
+                <span>La tua attività</span>
+            </li>
             <li class="menu-item" id="theme-btn">
                 <span class="material-symbols-outlined">palette</span>
                 <span>Tema</span>

@@ -155,6 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     let currentSongIndex = 0, isPlaying = false, isShuffle = false, repeatMode = 0;
     let touchStartX = 0, touchEndX = 0;
+    let currentView = 'home'; // Traccia la vista corrente
+    let songPlaytime = {}; // Oggetto per tracciare il tempo di ascolto
 
     // --- ELEMENTI DEL DOM ---
     const appContainer = document.querySelector('.app-container');
@@ -184,6 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const toastNotification = document.getElementById('toast-notification');
     const offlineIndicator = document.getElementById('offline-indicator');
+    const sidebarContent = document.querySelector('.sidebar-content');
+    const sidebarHeader = document.getElementById('sidebar-header');
 
     // Viste e Menu
     const views = {
@@ -191,11 +195,19 @@ document.addEventListener('DOMContentLoaded', () => {
         changelog: document.getElementById('changelog-view'),
         theme: document.getElementById('theme-view'),
     };
+    
+    const pageViews = {
+        activity: document.getElementById('activity-page')
+    };
+
     const settingsBtn = document.getElementById('settings-btn');
     const settingsMenu = document.getElementById('settings-menu');
+    const activityMenu = document.getElementById('activity-menu');
+    const activityMenuBtn = document.getElementById('activity-menu-btn');
     
     // Pulsanti
     const buttons = {
+        activity: document.getElementById('activity-btn'),
         theme: document.getElementById('theme-btn'),
         downloadAll: document.getElementById('download-all-btn'),
         copyLink: document.getElementById('copy-link-btn'),
@@ -206,22 +218,74 @@ document.addEventListener('DOMContentLoaded', () => {
         closeInfo: document.getElementById('close-info-btn'),
         closeChangelog: document.getElementById('close-changelog-btn'),
         closeTheme: document.getElementById('close-theme-btn'),
+        backToSettings: document.getElementById('back-to-settings-btn'),
+        resetActivity: document.getElementById('reset-activity-btn'),
     };
     const themeRadios = document.querySelectorAll('input[name="theme"]');
     
     // --- FUNZIONI DI CONTROLLO UI ---
-    function showMainView(viewName) {
-        homeView.classList.toggle('hidden', viewName !== 'home');
-        playerView.classList.toggle('hidden', viewName !== 'player');
+    function showMainView(viewName, direction = 'none') {
+        const oldView = currentView;
+        if (oldView === viewName) return;
+        currentView = viewName;
+
+        const home = document.getElementById('home-view');
+        const player = document.getElementById('player-view');
+
+        if (window.innerWidth <= 768 && direction !== 'none') {
+            // Animazione a scorrimento solo su mobile
+            if (direction === 'right') { // Player -> Home
+                home.classList.remove('slide-out-left');
+                player.classList.add('slide-out-right');
+                home.classList.add('active');
+                player.classList.remove('active');
+            } else { // Home -> Player
+                player.classList.remove('slide-out-right');
+                home.classList.add('slide-out-left');
+                player.classList.add('active');
+                home.classList.remove('active');
+            }
+        } else {
+            // Animazione a dissolvenza su desktop
+            home.classList.toggle('active', viewName === 'home');
+            player.classList.toggle('active', viewName === 'player');
+        }
+
+        // Assicura che i pulsanti siano visibili se siamo nella vista player con una canzone
+        if (viewName === 'player' && currentSongIndex > 0) {
+            buttons.download.style.display = 'grid';
+            buttons.share.style.display = 'grid';
+        }
+        updateActiveNavItem();
+    }
+    
+    function updateActiveNavItem() {
+        document.querySelectorAll('.nav-item.active').forEach(item => item.classList.remove('active'));
+        const action = currentView === 'home' ? 'go-home' : 'go-player';
+        document.querySelector(`.nav-item[data-action="${action}"]`).classList.add('active');
     }
 
-    function toggleSidebar(show) { appContainer.classList.toggle('sidebar-open', show); }
+    function toggleSidebar(show) {
+        appContainer.classList.toggle('sidebar-open', show);
+        if (!show) {
+            updateActiveNavItem();
+        }
+    }
     
     function togglePopup(viewName, show) {
         if (views[viewName]) {
             views[viewName].classList.toggle('hidden', !show);
         }
     }
+
+    function togglePageView(pageName, show) {
+        const page = pageViews[pageName];
+        if (page) {
+            appContainer.classList.toggle('page-view-active', show);
+            page.classList.toggle('hidden', !show);
+        }
+    }
+
 
     function showToast(message) {
         toastNotification.textContent = message;
@@ -264,33 +328,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadSong(songIndex, autoPlay = false) {
         const song = songs[songIndex];
         if (!song) return;
-
-        if (currentSongIndex > 0) {
-            localStorage.setItem(`song_pos_${currentSongIndex}`, audioPlayer.currentTime);
+        
+        if (song.isHome) {
+            showMainView('home', 'right');
+            return;
         }
 
         currentSongIndex = songIndex;
         document.querySelectorAll('.song-list li.active').forEach(item => item.classList.remove('active'));
         document.querySelectorAll(`.song-list li[data-index="${songIndex}"]`).forEach(item => item.classList.add('active'));
 
-        if (song.isHome) {
-            showMainView('home');
-            history.pushState(null, '', window.location.pathname);
-            if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
-            if (isPlaying) pauseSong();
-            buttons.download.style.display = 'none';
-            buttons.share.style.display = 'none';
-            return;
-        }
-
-        showMainView('player');
+        showMainView('player', 'left');
         songTitleEl.textContent = song.title;
         songArtistEl.textContent = song.artist;
         songImageEl.src = song.image;
         audioPlayer.src = song.audio;
-
-        buttons.download.style.display = 'grid';
-        buttons.share.style.display = 'grid';
 
         const songUrlTitle = formatSongTitleForUrl(song.title);
         history.pushState(null, '', '#' + songUrlTitle);
@@ -304,19 +356,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const savedPosition = localStorage.getItem(`song_pos_${currentSongIndex}`);
-        audioPlayer.oncanplaythrough = () => {
-            if (savedPosition) {
-                audioPlayer.currentTime = parseFloat(savedPosition);
-            }
-            if (autoPlay) {
+        if (autoPlay) {
+            playSong();
+        } else {
+            if (isPlaying) {
                 playSong();
+            } else {
+                pauseSong();
             }
-            audioPlayer.oncanplaythrough = null;
-        };
-
-        if (!autoPlay) {
-            pauseSong();
         }
     }
 
@@ -329,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSongIndex = newIndex;
         } else {
             currentSongIndex++;
-            if (currentSongIndex >= songs.length) currentSongIndex = (repeatMode === 1) ? 1 : 0;
+            if (currentSongIndex >= songs.length) currentSongIndex = 1; 
         }
         loadSong(currentSongIndex, true);
     }
@@ -384,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
         homeLi.classList.add('home-list-item');
         homeLi.dataset.index = 0;
         homeLi.innerHTML = `<span class="material-symbols-outlined">home</span>Home`;
-        homeLi.addEventListener('click', () => { loadSong(0); toggleSidebar(false); });
+        homeLi.addEventListener('click', () => { showMainView('home', 'right'); toggleSidebar(false); });
         songListEl.appendChild(homeLi);
 
         songsToRender.forEach(song => {
@@ -415,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name) {
             localStorage.setItem('musicPlayerUsername', name);
             welcomeMessageEl.classList.toggle('hidden', name.toLowerCase() !== 'utente');
-            if (name.toLowerCase() === 'gaia') showGaiaEasterEgg();
+            if (name.toLowerCase() === 'gaia' || name.toLowerCase() === 'miry') showGaiaEasterEgg();
         }
     };
 
@@ -424,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < 15; i++) {
             const heart = document.createElement('div');
             heart.classList.add('heart-emoji');
-            heart.textContent = '🩵';
+            heart.textContent = '❤️';
             heart.style.left = `${Math.random() * 100}vw`;
             heart.style.top = `${Math.random() * 100}vh`;
             heart.style.animationDelay = `${Math.random() * 2}s`;
@@ -476,6 +523,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- FUNZIONALITÀ ATTIVITÀ ---
+    function loadPlaytime() {
+        const storedPlaytime = localStorage.getItem('songPlaytime');
+        if (storedPlaytime) {
+            songPlaytime = JSON.parse(storedPlaytime);
+        }
+    }
+
+    function savePlaytime() {
+        localStorage.setItem('songPlaytime', JSON.stringify(songPlaytime));
+    }
+
+    function trackPlaytime() {
+        if (isPlaying && !songs[currentSongIndex].isHome) {
+            const songTitle = songs[currentSongIndex].title;
+            songPlaytime[songTitle] = (songPlaytime[songTitle] || 0) + 1;
+        }
+    }
+    
+    function displayTopSongs() {
+        const topPlayedContainer = document.getElementById('top-played-container');
+        const othersPlayedList = document.getElementById('others-played-list');
+        topPlayedContainer.innerHTML = '';
+        othersPlayedList.innerHTML = '';
+    
+        const sortedSongs = Object.entries(songPlaytime)
+            .sort(([, a], [, b]) => b - a);
+    
+        if (sortedSongs.length === 0) {
+            topPlayedContainer.innerHTML = '<p>Nessuna attività di ascolto registrata.</p>';
+            return;
+        }
+    
+        // Mostra la canzone più ascoltata
+        const [topTitle, topTime] = sortedSongs[0];
+        const topSongData = songs.find(s => s.title === topTitle);
+        if (topSongData) {
+            const topMinutes = Math.floor(topTime / 60);
+            topPlayedContainer.innerHTML = `
+                <img src="${topSongData.image}" alt="${topSongData.title}">
+                <div class="activity-song-details">
+                    <p class="activity-song-title">${topSongData.title}</p>
+                    <p class="activity-song-artist">${topSongData.artist}</p>
+                </div>
+                <span class="activity-listen-time">${topMinutes} min</span>
+            `;
+        }
+    
+        // Mostra le altre canzoni (dalla 2 alla 5)
+        const otherSongs = sortedSongs.slice(1, 5);
+        otherSongs.forEach(([title, time]) => {
+            const songData = songs.find(s => s.title === title);
+            if (songData) {
+                const minutes = Math.floor(time / 60);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <img src="${songData.image}" alt="${songData.title}">
+                    <div class="activity-song-details">
+                        <p class="activity-song-title">${songData.title}</p>
+                        <p class="activity-song-artist">${songData.artist}</p>
+                    </div>
+                    <span class="activity-listen-time">${minutes} min</span>
+                `;
+                othersPlayedList.appendChild(li);
+            }
+        });
+    }
+
+    function resetActivity() {
+        songPlaytime = {};
+        localStorage.removeItem('songPlaytime');
+        displayTopSongs();
+        showToast("Attività resettata");
+        activityMenu.classList.remove('visible');
+    }
+
+
     // --- EVENT LISTENERS ---
     playPauseBtn.addEventListener('click', () => isPlaying ? pauseSong() : playSong());
     nextBtn.addEventListener('click', handleNextSong);
@@ -483,13 +607,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     audioPlayer.addEventListener('timeupdate', () => {
         updateProgressBar();
-        if (Math.round(audioPlayer.currentTime) % 5 === 0 && !songs[currentSongIndex].isHome) {
-            localStorage.setItem(`song_pos_${currentSongIndex}`, audioPlayer.currentTime);
-        }
     });
     audioPlayer.addEventListener('loadedmetadata', updateProgressBar);
     audioPlayer.addEventListener('ended', () => {
-        localStorage.removeItem(`song_pos_${currentSongIndex}`);
         if (repeatMode === 2) {
             audioPlayer.currentTime = 0;
             playSong();
@@ -538,6 +658,17 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsMenu.classList.remove('visible');
             settingsBtn.classList.remove('active');
         }
+        if (!activityMenu.contains(e.target) && !activityMenuBtn.contains(e.target)) {
+            activityMenu.classList.remove('visible');
+        }
+    });
+    
+    sidebarContent.addEventListener('scroll', () => {
+        if (sidebarContent.scrollTop > 20) {
+            sidebarHeader.classList.add('collapsed');
+        } else {
+            sidebarHeader.classList.remove('collapsed');
+        }
     });
 
     Object.keys(views).forEach(key => {
@@ -551,6 +682,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === views[key]) togglePopup(key, false);
         });
     });
+
+    buttons.activity.addEventListener('click', () => {
+        displayTopSongs();
+        togglePageView('activity', true);
+        settingsMenu.classList.remove('visible');
+        settingsBtn.classList.remove('active');
+        if (window.innerWidth <= 768) {
+            toggleSidebar(false);
+        }
+    });
+    
+    buttons.backToSettings.addEventListener('click', () => {
+        togglePageView('activity', false);
+    });
+    
+    activityMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        activityMenu.classList.toggle('visible');
+    });
+
+    buttons.resetActivity.addEventListener('click', resetActivity);
+    
 
     buttons.downloadAll.addEventListener('click', downloadAllSongs);
     buttons.copyLink.addEventListener('click', copyLink);
@@ -575,14 +728,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target.closest('.nav-item');
         if (!target) return;
         const action = target.dataset.action;
-        document.querySelector('.nav-item.active')?.classList.remove('active');
-        target.classList.add('active');
+        
         if (action === 'open-songs') {
             toggleSidebar(true);
         } else {
             toggleSidebar(false);
-            if (action === 'go-home') loadSong(0);
-            else if (action === 'go-player') showMainView('player');
+            if (action === 'go-home') showMainView('home', 'right');
+            else if (action === 'go-player') showMainView('player', 'left');
         }
     });
 
@@ -616,6 +768,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTheme();
         updateRepeatButton();
         shuffleBtn.classList.toggle('active', isShuffle);
+        loadPlaytime();
+        setInterval(trackPlaytime, 1000);
+        setInterval(savePlaytime, 5000);
 
         if ('mediaSession' in navigator) {
             navigator.mediaSession.setActionHandler('play', playSong);
@@ -625,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const startIndex = getSongIndexFromHash(window.location.hash);
-        loadSong(startIndex, startIndex !== 0);
+        loadSong(startIndex, startIndex > 0);
 
         updateProgressBar();
     }
