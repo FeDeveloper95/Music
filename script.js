@@ -57,6 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
             audio: 'audio/forever-young-chill-mix.mp3'
         },
         {
+            title: 'Hero',
+            artist: 'Bush',
+            image: 'covers/hero.png',
+            audio: 'audio/hero.mp3'
+        },
+        {
             title: 'Hey',
             artist: 'Bush',
             image: 'covers/hey.jpg',
