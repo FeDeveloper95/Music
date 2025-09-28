@@ -63,6 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
             audio: 'audio/hero.mp3'
         },
         {
+            title: 'Hero Pt. II',
+            artist: 'Bush',
+            image: 'covers/hero2.png',
+            audio: 'audio/hero2.mp3'
+        },
+        {
             title: 'Hey',
             artist: 'Bush',
             image: 'covers/hey.jpg',
