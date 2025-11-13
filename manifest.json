@@ -1,7 +1,7 @@
 {
     "name": "Music",
     "short_name": "Music",
-    "start_url": ".",
+    "start_url": "/Music/",
     "display": "standalone",
     "background_color": "#0D1F2A",
     "theme_color": "#0D1F2A",
@@ -620,12 +620,12 @@
             "src": "icons/windows11/Square44x44Logo.altform-lightunplated_targetsize-256.png",
             "sizes": "256x256",
             "type": "image/png"
-        }
+        },
         {
             "src": "icons/icon-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
-            "purpose": "any"
+            "type": "image/png",
+            "purpose": "any" // <-- VIRGOLA INSERITA E CODICE SISTEMATO
         }
     ]
 }
